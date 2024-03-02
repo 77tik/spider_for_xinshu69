@@ -4,6 +4,9 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 from flask_sqlalchemy import SQLAlchemy
 
+from flask_login import UserMixin
+
+
 db = SQLAlchemy()
 
 
@@ -35,7 +38,7 @@ class Bookmark(db.Model):
     # 定义外键关系
     book = db.relationship('Books', backref='bookmarks')
 
-class User(db.Model):
+class User(db.Model,UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), unique=True, nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)

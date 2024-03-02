@@ -2,7 +2,8 @@ from flask import render_template, request, flash, redirect, url_for, session
 from . import auth_bp
 from ..models import db
 from ..models import User
-
+from flask_login import login_user, logout_user, current_user
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
@@ -45,8 +46,8 @@ def login():
 
         if user and user.check_password(password):
             flash('登录成功！', 'success')
-            session['email'] = user.email
-            # 这里可以设置登录状态
+            # 使用 Flask-Login 的 login_user 函数将用户标记为已登录状态
+            login_user(user)
             return redirect(url_for('main.index'))
         else:
             flash('邮箱或密码错误！', 'error')
@@ -56,7 +57,9 @@ def login():
 
 @auth_bp.route('/logout')
 def logout():
-    session.pop('email',None)
+    # 使用 Flask-Login 的 logout_user 函数将用户标记为未登录状态
+    logout_user()
     flash('已退出登录')
     return redirect(url_for('auth.login'))
+
 

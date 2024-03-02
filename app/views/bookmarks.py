@@ -1,20 +1,24 @@
 from flask import render_template, session, flash, redirect, url_for, request, jsonify
+from flask_jwt_extended import jwt_required
+
 from . import bookmarks_bp
-from .logrequired import login_required
+from flask_login import login_required, current_user
 from ..models import db
 from ..models import Bookmark, Books
 
 
 @bookmarks_bp.route('/bookmarks')
 @login_required
+
 def bookmarks():
-    user_email = session['email']
+    user_email = current_user.email
     bookmarks = Bookmark.query.filter_by(user_email=user_email).all()
     return render_template('bookmarks.html', bookmarks=bookmarks)
 
 # 删除收藏路由
 @bookmarks_bp.route('/remove_bookmark/<int:bookmark_id>', methods=['POST'])
 @login_required
+
 def remove_bookmark(bookmark_id):
     bookmark = Bookmark.query.get_or_404(bookmark_id)
     db.session.delete(bookmark)
@@ -25,9 +29,10 @@ def remove_bookmark(bookmark_id):
 
 @bookmarks_bp.route('/toggle_bookmark/<int:article_id>', methods=['POST'])
 @login_required
+
 def toggle_bookmark(article_id):
     # 获取当前用户的邮箱，这里假设你已经实现了用户认证和登录功能
-    user_email = session['email']
+    user_email = current_user.email
 
     # 获取文章对象
     article = Books.query.get_or_404(article_id)
