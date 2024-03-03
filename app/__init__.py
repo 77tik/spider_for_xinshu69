@@ -4,7 +4,7 @@ from flask import Flask, redirect, url_for
 
 from .models import User
 from .views import auth_bp,bookmarks_bp,history_bp,main_bp
-from flask_jwt_extended import JWTManager
+
 import secrets
 
 

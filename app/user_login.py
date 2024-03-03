@@ -1,7 +1,7 @@
 from flask import redirect, url_for
 from flask_login import LoginManager, UserMixin
+from .models import User
 
-from projectA.app.models import User
 
 # 创建一个 Flask-Login 的 LoginManager 实例
 login_manager = LoginManager()

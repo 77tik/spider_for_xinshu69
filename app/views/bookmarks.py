@@ -1,5 +1,5 @@
 from flask import render_template, session, flash, redirect, url_for, request, jsonify
-from flask_jwt_extended import jwt_required
+
 
 from . import bookmarks_bp
 from flask_login import login_required, current_user

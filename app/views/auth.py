@@ -3,7 +3,7 @@ from . import auth_bp
 from ..models import db
 from ..models import User
 from flask_login import login_user, logout_user, current_user
-from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():

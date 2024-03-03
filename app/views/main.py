@@ -1,5 +1,5 @@
 from flask import render_template, request, redirect, url_for, jsonify
-from flask_jwt_extended import jwt_required
+
 from flask_login import login_required, current_user
 from . import main_bp
 from ..models import db

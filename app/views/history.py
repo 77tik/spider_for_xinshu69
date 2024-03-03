@@ -1,5 +1,5 @@
 from flask import render_template, session, redirect, url_for
-from flask_jwt_extended import jwt_required
+
 
 from . import history_bp
 from flask_login import login_required, current_user

@@ -1,6 +1,6 @@
 # run.py
 
-from projectA.app import create_app
+from app import create_app
 
 # 创建 Flask 应用实例
 app = create_app()
