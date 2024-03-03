@@ -1,5 +1,7 @@
 from req import do_request
 from pyquery import PyQuery as pq
+
+from spider_for_xinshu69.Spider.headers import Headers
 from tasks import Task
 from novel_body import Novelbody
 import re
@@ -97,7 +99,7 @@ if __name__ == "__main__":
     """
         爬取小说
     """
-    headers = {
+    """headers = {
         'authority': 'cdn.shucdn.com',
         'accept': 'text/css,*/*;q=0.1',
         'accept-language': 'zh-CN,zh;q=0.9',
@@ -111,8 +113,9 @@ if __name__ == "__main__":
         'sec-fetch-mode': 'no-cors',
         'sec-fetch-site': 'cross-site',
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
-    }
-
+    }"""
+    head = Headers()
+    headers = head.get_headers()
 
     url = "https://www.69xinshu.com/novels/hot"
     s = Spider(headers=headers)
