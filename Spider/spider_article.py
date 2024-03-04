@@ -7,6 +7,9 @@ from novel_body import Novelbody
 import re
 from pymysql import Connection
 
+
+head = Headers()
+headers = head.get_headers()
 class Spider(object):
 
     def __init__(self, headers):
@@ -90,8 +93,86 @@ class Spider(object):
 
         # 如果者套流程没问题就将task中的状态改为success，并存入task表中
 
+        conn = Connection(
+            host='localhost',
+            port=3306,
+            user='root',
+            password='xq200431',
+            autocommit=True
+        )
+        cursor = conn.cursor()  # 获取游标对象
+        conn.select_db("novels")
 
-        return novel_name,author_list,novel_comments,total_webs
+        for i in range(len(total_webs)):
+            # 对我的每一本书进行遍历
+            bookname = novel_name[i]
+
+            task = Task(title=bookname, chapter_number=0, status="doing")
+            # task表记录对应的书名，章节名，以及存入状态
+            try:
+                # 如果该书不在数据库中，就添加进去
+                cursor.execute("select * from books where title = %s", (bookname,))
+                if not cursor.fetchone():
+                    cursor.execute("insert into books(title,author,description) values(%s,%s,%s)",
+                                   (novel_name[i], author_list[i], novel_comments[i]))
+
+                cursor.execute("select id from books where title = %s", (bookname,))
+
+                # 通过书名来索引id，用于往chapters表中塞入章节
+                result_id = cursor.fetchone()
+                bookid = result_id[0]
+
+                cursor.execute("select chapter_number from chapters where book_id = %s", (bookid,))
+                # 将数据库中的最大章节和最新章节相比较，然后存入新的章节
+                if cursor.fetchone():
+                    cursor.execute("select MAX(chapter_number) AS max_chapter_number from chapters where book_id = %s",
+                                   (bookid,))
+                    res_number = cursor.fetchone()
+                    max_chapter_number = res_number[0]
+                    while max_chapter_number < len(total_webs[i]):
+
+                        task.chapter_number = max_chapter_number
+                        try:
+                            getbody = Novelbody(total_webs[i][max_chapter_number], headers)
+                            body = getbody.get_novel_body()
+                            max_chapter_number += 1
+                            cursor.execute(
+                                "insert into chapters(book_id,chapter_number,title,content) values(%s,%s,%s,%s)",
+                                (bookid, max_chapter_number, f"第{max_chapter_number}章", body))
+                            task.chapter_number = max_chapter_number
+                            task.status = 'success'
+                            task.save()
+                        except Exception as e:
+                            task.status = 'error'
+                            task.save()
+                            continue
+                # 如果章节表中没有该书的内容，就从头为这本书创建章节
+                else:
+                    cha_number = 1
+                    task.chapter_number = 1
+                    for chapters in total_webs[i]:
+                        try:
+                            getbody = Novelbody(chapters, headers)
+                            body = getbody.get_novel_body()
+
+                            cursor.execute(
+                                "insert into chapters(book_id,chapter_number,title,content) values(%s,%s,%s,%s)",
+                                (bookid, cha_number, f"第{cha_number}章", body))
+
+                            task.chapter_number = cha_number
+                            task.status = 'success'
+                            task.save()
+                            cha_number += 1
+                        except Exception as e:
+                            task.status = 'error'
+                            task.save()
+                            continue
+            except Exception as e:
+                task.status = 'error'
+                task.save()
+                continue
+
+
 
 
 
@@ -99,105 +180,7 @@ if __name__ == "__main__":
     """
         爬取小说
     """
-    """headers = {
-        'authority': 'cdn.shucdn.com',
-        'accept': 'text/css,*/*;q=0.1',
-        'accept-language': 'zh-CN,zh;q=0.9',
-        'cache-control': 'no-cache',
-        'pragma': 'no-cache',
-        'referer': 'https://www.69xinshu.com/',
-        'sec-ch-ua': '"Not A(Brand";v="99", "Google Chrome";v="121", "Chromium";v="121"',
-        'sec-ch-ua-mobile': '?0',
-        'sec-ch-ua-platform': '"Windows"',
-        'sec-fetch-dest': 'style',
-        'sec-fetch-mode': 'no-cors',
-        'sec-fetch-site': 'cross-site',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
-    }"""
-    head = Headers()
-    headers = head.get_headers()
 
     url = "https://www.69xinshu.com/novels/hot"
     s = Spider(headers=headers)
-    novel_name, author_list, novel_comments, total_webs = s.spider(url)
-
-    conn = Connection(
-        host='localhost',
-        port=3306,
-        user='root',
-        password='xq200431',
-        autocommit=True
-    )
-    cursor = conn.cursor()  # 获取游标对象
-    conn.select_db("novels")
-
-
-
-    for i in range(len(total_webs)):
-        # 对我的每一本书进行遍历
-        bookname = novel_name[i]
-
-        task = Task(title=bookname,chapter_number=0,status="doing")
-        # task表记录对应的书名，章节名，以及存入状态
-        try:
-            # 如果该书不在数据库中，就添加进去
-            cursor.execute("select * from books where title = %s", (bookname,))
-            if not cursor.fetchone():
-                cursor.execute("insert into books(title,author,description) values(%s,%s,%s)",
-                               (novel_name[i], author_list[i], novel_comments[i]))
-
-            cursor.execute("select id from books where title = %s", (bookname,))
-
-            # 通过书名来索引id，用于往chapters表中塞入章节
-            result_id = cursor.fetchone()
-            bookid = result_id[0]
-
-            cursor.execute("select chapter_number from chapters where book_id = %s", (bookid,))
-            # 将数据库中的最大章节和最新章节相比较，然后存入新的章节
-            if cursor.fetchone():
-                cursor.execute("select MAX(chapter_number) AS max_chapter_number from chapters where book_id = %s",
-                               (bookid,))
-                res_number = cursor.fetchone()
-                max_chapter_number = res_number[0]
-                while max_chapter_number < len(total_webs[i]):
-
-                    task.chapter_number = max_chapter_number
-                    try:
-                        getbody = Novelbody(total_webs[i][max_chapter_number], headers)
-                        body = getbody.get_novel_body()
-                        max_chapter_number += 1
-                        cursor.execute("insert into chapters(book_id,chapter_number,title,content) values(%s,%s,%s,%s)",
-                                       (bookid, max_chapter_number, f"第{max_chapter_number}章", body))
-                        task.chapter_number = max_chapter_number
-                        task.status = 'success'
-                        task.save()
-                    except Exception as e:
-                        task.status = 'error'
-                        task.save()
-                        continue
-            # 如果章节表中没有该书的内容，就从头为这本书创建章节
-            else:
-                cha_number = 1
-                task.chapter_number = 1
-                for chapters in total_webs[i]:
-                    try:
-                        getbody = Novelbody(chapters, headers)
-                        body = getbody.get_novel_body()
-
-                        cursor.execute("insert into chapters(book_id,chapter_number,title,content) values(%s,%s,%s,%s)",
-                                       (bookid, cha_number, f"第{cha_number}章", body))
-
-                        task.chapter_number = cha_number
-                        task.status = 'success'
-                        task.save()
-                        cha_number += 1
-                    except Exception as e:
-                        task.status = 'error'
-                        task.save()
-                        continue
-        except Exception as e:
-            task.status = 'error'
-            task.save()
-            continue
-
-
+    s.spider(url)
