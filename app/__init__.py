@@ -4,11 +4,23 @@ from flask import Flask, redirect, url_for
 
 from .models import User
 from .views import auth_bp,bookmarks_bp,history_bp,main_bp
-
+import sentry_sdk
 import secrets
 
 
 def create_app():
+    # 连接到sentry 进行错误跟踪
+    sentry_sdk.init(
+        dsn="https://083b7490226972ac677a218fbe663540@o4506851868344320.ingest.sentry.io/4506851872342017",
+        # Set traces_sample_rate to 1.0 to capture 100%
+        # of transactions for performance monitoring.
+        traces_sample_rate=1.0,
+        # Set profiles_sample_rate to 1.0 to profile 100%
+        # of sampled transactions.
+        # We recommend adjusting this value in production.
+        profiles_sample_rate=1.0,
+    )
+
     app = Flask(__name__)
 
     secret_key = secrets.token_hex(32)

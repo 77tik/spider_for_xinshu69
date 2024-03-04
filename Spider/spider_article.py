@@ -134,11 +134,13 @@ if __name__ == "__main__":
 
 
     for i in range(len(total_webs)):
-
+        # 对我的每一本书进行遍历
         bookname = novel_name[i]
 
         task = Task(title=bookname,chapter_number=0,status="doing")
+        # task表记录对应的书名，章节名，以及存入状态
         try:
+            # 如果该书不在数据库中，就添加进去
             cursor.execute("select * from books where title = %s", (bookname,))
             if not cursor.fetchone():
                 cursor.execute("insert into books(title,author,description) values(%s,%s,%s)",
@@ -146,11 +148,12 @@ if __name__ == "__main__":
 
             cursor.execute("select id from books where title = %s", (bookname,))
 
-            # bookid = cursor.lastrowid
+            # 通过书名来索引id，用于往chapters表中塞入章节
             result_id = cursor.fetchone()
             bookid = result_id[0]
 
             cursor.execute("select chapter_number from chapters where book_id = %s", (bookid,))
+            # 将数据库中的最大章节和最新章节相比较，然后存入新的章节
             if cursor.fetchone():
                 cursor.execute("select MAX(chapter_number) AS max_chapter_number from chapters where book_id = %s",
                                (bookid,))
@@ -172,6 +175,7 @@ if __name__ == "__main__":
                         task.status = 'error'
                         task.save()
                         continue
+            # 如果章节表中没有该书的内容，就从头为这本书创建章节
             else:
                 cha_number = 1
                 task.chapter_number = 1
